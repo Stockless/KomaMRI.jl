@@ -48,7 +48,7 @@ julia> obj.ρ
     #Off-resonance related
     Δw::AbstractVector{T} = zeros(eltype(x), size(x))
     #EXPERIMENTAL: Coils
-    coil_sens::AbstractVector{T} = ones(eltype(x), length(x))
+    coil_sens::AbstractMatrix{T} = ones(eltype(x), size(x, 1), 1)
     #Motion
     motion::MotionModel{T} = NoMotion{eltype(x)}()
 end
@@ -74,18 +74,19 @@ Base.:(≈)(m1::MotionModel, m2::MotionModel)  = false
 """Separate object spins in a sub-group"""
 Base.getindex(obj::Phantom, p::Union{AbstractRange,AbstractVector,Colon}) = begin
     fields = []
-    for field in Iterators.filter(x -> !(x == :name), fieldnames(Phantom))
+    for field in Iterators.filter(x -> !(x == :name) && !(x == :coil_sens), fieldnames(Phantom))
         push!(fields, (field, getfield(obj, field)[p]))
     end
-    return Phantom(; name=obj.name, fields...)
+    push!(fields, (:coil_sens, getfield(obj, :coil_sens)[p, :]))
 end
 
 """Separate object spins in a sub-group (lightweigth)."""
 Base.view(obj::Phantom, p::Union{AbstractRange,AbstractVector,Colon}) = begin
     fields = []
-    for field in Iterators.filter(x -> !(x == :name), fieldnames(Phantom))
+    for field in Iterators.filter(x -> !(x == :name) && !(x == :coil_sens), fieldnames(Phantom))
         push!(fields, (field, @view(getfield(obj, field)[p])))
     end
+    push!(fields, (:coil_sens, @view(getfield(obj, :coil_sens)[p, :])))
     return Phantom(; name=obj.name, fields...)
 end
 

@@ -22,6 +22,26 @@ function initialize_spins_state(
     return Xt, obj
 end
 
+
+function sim_output_dim(
+    obj::Phantom{T}, seq::Sequence, sys::Scanner, sim_method::SimulationMethod
+) where {T<:Real}
+    # Determine the number of coils
+    n_coils = size(obj.coil_sens, 2)
+    return (sum(seq.ADC.N), n_coils) # Nt x Ncoils
+end
+
+"""Magnetization initialization for Bloch simulation method."""
+function initialize_spins_state(
+    obj::Phantom{T}, sim_method::SimulationMethod
+) where {T<:Real}
+    Nspins = length(obj)
+    Mxy = zeros(T, Nspins)
+    Mz = obj.ρ
+    Xt = Mag{T}(Mxy, Mz)
+    return Xt, obj
+end
+
 """
     run_spin_precession(obj, seq, Xt, sig)
 
@@ -63,8 +83,9 @@ function run_spin_precession!(
     M.xy .= Mxy[:, end]
     M.z  .= M.z .* exp.(-dur ./ p.T1) .+ p.ρ .* (1 .- exp.(-dur ./ p.T1))
     #Acquired signal
-    sig .= transpose(sum(p.coil_sens .* Mxy[:, findall(seq.ADC)]; dims=1)) #<--- TODO: add coil sensitivities
-
+    for i in 1:size(p.coil_sens, 2)
+        sig[:, i] .= transpose(sum(p.coil_sens[:, i] .* Mxy[:, findall(seq.ADC)]; dims=1))
+    end
     return nothing
 end
 
