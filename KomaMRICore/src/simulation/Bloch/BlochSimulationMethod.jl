@@ -8,24 +8,6 @@ include("Magnetization.jl") #Defines Mag <: SpinStateRepresentation
 function sim_output_dim(
     obj::Phantom{T}, seq::Sequence, sys::Scanner, sim_method::SimulationMethod
 ) where {T<:Real}
-    return (sum(seq.ADC.N), 1) #Nt x Ncoils, This should consider the coil info from sys
-end
-
-"""Magnetization initialization for Bloch simulation method."""
-function initialize_spins_state(
-    obj::Phantom{T}, sim_method::SimulationMethod
-) where {T<:Real}
-    Nspins = length(obj)
-    Mxy = zeros(T, Nspins)
-    Mz = obj.ρ
-    Xt = Mag{T}(Mxy, Mz)
-    return Xt, obj
-end
-
-
-function sim_output_dim(
-    obj::Phantom{T}, seq::Sequence, sys::Scanner, sim_method::SimulationMethod
-) where {T<:Real}
     # Determine the number of coils
     n_coils = size(obj.coil_sens, 2)
     return (sum(seq.ADC.N), n_coils) # Nt x Ncoils
