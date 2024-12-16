@@ -1,20 +1,15 @@
 steps:
-  - group: ":julia: Tests"
+  - group: ":julia: ($TEST_GROUP) Tests"
     steps:
       - label: "CPU: Run tests on v{{matrix.version}}"
         matrix:
           setup:
             version:
-              - "1.9"
+              - "1.10"
               - "1"
         plugins:
           - JuliaCI/julia#v1:
               version: "{{matrix.version}}"
-          - JuliaCI/julia-coverage#v1:
-              codecov: true
-              dirs:
-                - KomaMRICore/src
-                - KomaMRICore/ext
         command: |
           julia -e 'println("--- :julia: Instantiating project")
               using Pkg
@@ -25,15 +20,21 @@ steps:
 
           julia -e 'println("--- :julia: Running tests")
               using Pkg
-              Pkg.test("KomaMRICore"; coverage=true, julia_args=`--threads=auto`)'
+              Pkg.test("KomaMRICore")'
         agents:
-          queue: "juliagpu"
-        timeout_in_minutes: 60
+          arch: "aarch64" 
+          queue: "juliaecosystem"
+          num_cpus: "4"
+        env:
+          TEST_GROUP: $TEST_GROUP
+          JULIA_NUM_THREADS: "4"
+        timeout_in_minutes: 30
         
       - label: "AMDGPU: Run tests on v{{matrix.version}}"
         matrix:
           setup:
             version:
+              - "1.10"
               - "1"
         plugins:
           - JuliaCI/julia#v1:
@@ -43,6 +44,8 @@ steps:
               dirs:
                 - KomaMRICore/src
                 - KomaMRICore/ext
+        env:
+          TEST_GROUP: $TEST_GROUP
         command: |
           julia -e 'println("--- :julia: Instantiating project")
               using Pkg
@@ -67,7 +70,7 @@ steps:
         matrix:
           setup:
             version:
-              - "1.9"
+              - "1.10"
               - "1"
         plugins:
           - JuliaCI/julia#v1:
@@ -77,6 +80,8 @@ steps:
               dirs:
                 - KomaMRICore/src
                 - KomaMRICore/ext
+        env:
+          TEST_GROUP: $TEST_GROUP
         command: |
           julia -e 'println("--- :julia: Instantiating project")
               using Pkg
@@ -101,11 +106,13 @@ steps:
         matrix:
           setup:
             version:
-              - "1.9"
+              - "1.10"
               - "1"
         plugins:
           - JuliaCI/julia#v1:
               version: "{{matrix.version}}"
+        env:
+          TEST_GROUP: $TEST_GROUP
         command: |
           julia -e 'println("--- :julia: Instantiating project")
               using Pkg
@@ -131,7 +138,7 @@ steps:
         matrix:
           setup:
             version:
-              - "1.9"
+              - "1.10"
               - "1"
         plugins:
           - JuliaCI/julia#v1:
@@ -141,6 +148,8 @@ steps:
               dirs:
                 - KomaMRICore/src
                 - KomaMRICore/ext
+        env:
+          TEST_GROUP: $TEST_GROUP
         command: |
           julia -e 'println("--- :julia: Instantiating project")
               using Pkg

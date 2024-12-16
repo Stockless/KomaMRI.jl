@@ -290,14 +290,14 @@ function KomaUI(; darkmode=true, frame=true, phantom_mode="2D", sim=Dict{String,
     on((img) -> view_ui!(img, w; type="absi", darkmode), img_ui)
 
     # Update Koma versions to tooltip
-    version_ui = string(KomaMRI.__VERSION__)
-    version_core = string(KomaMRICore.__VERSION__)
-    version_io = string(KomaMRIFiles.__VERSION__)
-    version_plots = string(KomaMRIPlots.__VERSION__)
+    version_ui    = string(pkgversion(@__MODULE__))
+    version_core  = string(pkgversion(KomaMRICore))
+    version_io    = string(pkgversion(KomaMRIFiles))
+    version_plots = string(pkgversion(KomaMRIPlots))
     @js_ w (
-        @var version_ui = $(version_ui);
-        @var version_core = $(version_core);
-        @var version_io = $(version_io);
+        @var version_ui    = $(version_ui);
+        @var version_core  = $(version_core);
+        @var version_io    = $(version_io);
         @var version_plots = $(version_plots);
         document.getElementById("Github").setAttribute("data-bs-original-title",
                                                          "KomaMRI.jl v"+version_ui+"\n"+

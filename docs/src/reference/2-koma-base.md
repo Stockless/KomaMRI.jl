@@ -20,33 +20,43 @@ pelvis_phantom2D
 heart_phantom
 ```
 
-### `MotionModel`-related functions
+## `Motion`-related functions
 
 ```@docs
+NoMotion
+Motion
+MotionList
 get_spin_coords
 ```
 
-### `SimpleMotion <: MotionModel`
+### `AbstractAction` types
 
 ```@docs
-SimpleMotion
-```
-
-### `SimpleMotion types`
-
-```@docs
-Translation
-Rotation
+Translate
+Translate(dx, dy, dz, time, spins)
+Rotate
+Rotate(pitch, roll, yaw, time, spins)
 HeartBeat
-PeriodicTranslation
-PeriodicRotation
-PeriodicHeartBeat
+HeartBeat(circumferential_strain, radial_strain, longitudinal_strain, time, spins)
+Path
+Path(dx, dy, dz, time, spins)
+FlowPath
+FlowPath(dx, dy, dz, spin_reset, time, spins)
 ```
 
-### `ArbitraryMotion <: MotionModel`
+### `AbstractTimeSpan` types and related functions
 
 ```@docs
-ArbitraryMotion
+TimeRange
+Periodic
+unit_time
+```
+
+### `AbstractSpinSapn` types
+
+```@docs
+AllSpins
+SpinRange
 ```
 
 ## `Sequence`-related functions

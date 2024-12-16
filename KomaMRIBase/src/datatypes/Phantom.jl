@@ -1,10 +1,3 @@
-abstract type MotionModel{T<:Real} end
-
-#Motion models:
-include("phantom/motion/SimpleMotion.jl")
-include("phantom/motion/ArbitraryMotion.jl")
-include("phantom/motion/NoMotion.jl")
-
 """
     obj = Phantom(name, x, y, z, ρ, T1, T2, T2s, Δw, Dλ1, Dλ2, Dθ, motion)
 
@@ -24,7 +17,7 @@ a property value representing a spin. This struct serves as an input for the sim
 - `Dλ1`: (`::AbstractVector{T<:Real}`) spin Dλ1 (diffusion) parameter vector
 - `Dλ2`: (`::AbstractVector{T<:Real}`) spin Dλ2 (diffusion) parameter vector
 - `Dθ`: (`::AbstractVector{T<:Real}`) spin Dθ (diffusion) parameter vector
-- `motion`: (`::MotionModel{T<:Real}`) motion model
+- `motion`: (`::Union{NoMotion, Motion{T<:Real} MotionList{T<:Real}}`) motion
 
 # Returns
 - `obj`: (`::Phantom`) Phantom struct
@@ -38,7 +31,7 @@ julia> obj.ρ
 """
 @with_kw mutable struct Phantom{T<:Real}
     name::String           = "spins"
-    x                      :: AbstractVector{T}
+    x::AbstractVector{T}   = @isdefined(T) ? T[] : Float64[]
     y::AbstractVector{T}   = zeros(eltype(x), size(x))
     z::AbstractVector{T}   = zeros(eltype(x), size(x))
     ρ::AbstractVector{T}   = ones(eltype(x), size(x))
@@ -50,8 +43,11 @@ julia> obj.ρ
     #EXPERIMENTAL: Coils
     coil_sens::AbstractMatrix{T} = ones(eltype(x), size(x, 1), 1)
     #Motion
-    motion::MotionModel{T} = NoMotion{eltype(x)}()
+    motion::Union{NoMotion, Motion{T}, MotionList{T}} = NoMotion()
 end
+
+const NON_STRING_PHANTOM_FIELDS = Iterators.filter(x -> fieldtype(Phantom, x) != String && !(x == :coil_sens),         fieldnames(Phantom))
+const VECTOR_PHANTOM_FIELDS     = Iterators.filter(x -> fieldtype(Phantom, x) <: AbstractVector, fieldnames(Phantom))
 
 """Size and length of a phantom"""
 size(x::Phantom) = size(x.ρ)
@@ -61,29 +57,29 @@ Base.iterate(x::Phantom) = (x[1], 2)
 Base.iterate(x::Phantom, i::Integer) = (i <= length(x)) ? (x[i], i + 1) : nothing
 Base.lastindex(x::Phantom) = length(x)
 Base.getindex(x::Phantom, i::Integer) = x[i:i]
+Base.view(x::Phantom, i::Integer) = @view(x[i:i])
 
 """Compare two phantoms"""
-Base.:(==)(obj1::Phantom, obj2::Phantom) = reduce(
-    &,
-    [getfield(obj1, field) == getfield(obj2, field) for field in Iterators.filter(x -> !(x == :name), fieldnames(Phantom))],
-)
-Base.:(≈)(obj1::Phantom, obj2::Phantom)      = reduce(&, [getfield(obj1, field) ≈ getfield(obj2, field) for field in Iterators.filter(x -> !(x == :name), fieldnames(Phantom))])
-Base.:(==)(m1::MotionModel, m2::MotionModel) = false
-Base.:(≈)(m1::MotionModel, m2::MotionModel)  = false
+function Base.:(==)(obj1::Phantom, obj2::Phantom)
+    if length(obj1) != length(obj2) return false end
+    return reduce(&, [getfield(obj1, field) == getfield(obj2, field) for field in NON_STRING_PHANTOM_FIELDS])
+end
+function Base.:(≈)(obj1::Phantom, obj2::Phantom)
+    if length(obj1) != length(obj2) return false end
+    return reduce(&, [getfield(obj1, field)  ≈ getfield(obj2, field) for field in NON_STRING_PHANTOM_FIELDS])
+end
 
 """Separate object spins in a sub-group"""
-Base.getindex(obj::Phantom, p::Union{AbstractRange,AbstractVector,Colon}) = begin
+function Base.getindex(obj::Phantom, p)
     fields = []
-    for field in Iterators.filter(x -> !(x == :name) && !(x == :coil_sens), fieldnames(Phantom))
+    for field in NON_STRING_PHANTOM_FIELDS
         push!(fields, (field, getfield(obj, field)[p]))
     end
     push!(fields, (:coil_sens, getfield(obj, :coil_sens)[p, :]))
 end
-
-"""Separate object spins in a sub-group (lightweigth)."""
-Base.view(obj::Phantom, p::Union{AbstractRange,AbstractVector,Colon}) = begin
+function Base.view(obj::Phantom, p)
     fields = []
-    for field in Iterators.filter(x -> !(x == :name) && !(x == :coil_sens), fieldnames(Phantom))
+    for field in NON_STRING_PHANTOM_FIELDS
         push!(fields, (field, @view(getfield(obj, field)[p])))
     end
     push!(fields, (:coil_sens, @view(getfield(obj, :coil_sens)[p, :])))
@@ -92,13 +88,15 @@ end
 
 """Addition of phantoms"""
 +(obj1::Phantom, obj2::Phantom) = begin
+    name = first(obj1.name * "+" * obj2.name, 50) # The name is limited to 50 characters
     fields = []
-    for field in Iterators.filter(x -> !(x == :name), fieldnames(Phantom))
+    for field in VECTOR_PHANTOM_FIELDS
         push!(fields, (field, [getfield(obj1, field); getfield(obj2, field)]))
     end
-    Nmaxchars = 50
-    name = first(obj1.name * "+" * obj2.name, Nmaxchars)
-    return Phantom(; name=name, fields...)
+    return Phantom(; 
+        name = name, 
+        fields..., 
+        motion = vcat(obj1.motion, obj2.motion, length(obj1), length(obj2)))
 end
 
 """Scalar multiplication of a phantom"""
@@ -114,29 +112,34 @@ function get_dims(obj::Phantom)
     push!(dims, any(x -> x != 0, obj.x))
     push!(dims, any(x -> x != 0, obj.y))
     push!(dims, any(x -> x != 0, obj.z))
-    return dims
+    return sum(dims) > 0 ? dims : Bool[1, 0, 0]
 end
 
 """
-    obj = heart_phantom(...)
+    obj = heart_phantom(
+        circumferential_strain, radial_strain, rotation_angle; 
+        heart_rate, asymmetry
+    )
 
 Heart-like LV 2D phantom. The variable `circumferential_strain` and `radial_strain` are for streching (if positive)
 or contraction (if negative). `rotation_angle` is for rotation.
 
-# Arguments
-- `circumferential_strain`: (`::Real`, `=-0.3`) contraction parameter
-- `radial_strain`: (`::Real`, `=-0.3`) contraction parameter
-- `rotation_angle`: (`::Real`, `=1`) rotation parameter
+# Keywords
+- `circumferential_strain`: (`::Real`, `=-0.3`) contraction parameter. Between -1 and 1
+- `radial_strain`: (`::Real`, `=-0.3`) contraction parameter. Between -1 and 1
+- `rotation_angle`: (`::Real`, `=15.0`, `[º]`) maximum rotation angle
+- `heart_rate`: (`::Real`, `=60`, `[bpm]`) heartbeat frequency
+- `temporal_asymmetry`: (`::Real`, `=0.2`) time fraction of the period in which the systole occurs. Therefore, diastole lasts for `period * (1 - temporal_asymmetry)`
 
 # Returns
-- `phantom`: (`::Phantom`) Heart-like LV phantom struct
+- `obj`: (`::Phantom`) Heart-like LV phantom struct
 """
-function heart_phantom(
+function heart_phantom(;
     circumferential_strain=-0.3,
     radial_strain=-0.3,
-    rotation_angle=15.0;
+    rotation_angle=15.0,
     heart_rate=60,
-    asymmetry=0.2,
+    temporal_asymmetry=0.2,
 )
     #PARAMETERS
     FOV = 10e-2 # [m] Diameter ventricule
@@ -171,9 +174,9 @@ function heart_phantom(
         ρ=ρ[ρ .!= 0],
         T1=T1[ρ .!= 0],
         T2=T2[ρ .!= 0],
-        # Dλ1=Dλ1[ρ .!= 0],
-        # Dλ2=Dλ2[ρ .!= 0],
-        # Dθ=Dθ[ρ .!= 0],
+        Dλ1=Dλ1[ρ .!= 0],
+        Dλ2=Dλ2[ρ .!= 0],
+        Dθ=Dθ[ρ .!= 0],
         motion=SimpleMotion(
             PeriodicHeartBeat(;
                 period=period,
@@ -182,8 +185,8 @@ function heart_phantom(
                 radial_strain=radial_strain,
                 longitudinal_strain=0.0,
             ),
-            PeriodicRotation(;
-                period=period, asymmetry=asymmetry, yaw=rotation_angle, pitch=0.0, roll=0.0
+            Rotate(
+                0.0, 0.0, rotation_angle, Periodic(; period=period, asymmetry=temporal_asymmetry)
             ),
         ),
     )
@@ -201,7 +204,7 @@ Default ss=4 sample spacing is 2 mm. Original file (ss=1) sample spacing is .5 m
     digital brain phantom" NeuroImage, in review - 2006
 - B. Aubert-Broche, M. Griffin, G.B. Pike, A.C. Evans and D.L. Collins: "20 new digital
     brain phantoms for creation of validation image data bases" IEEE TMI, in review - 2006
-- https://brainweb.bic.mni.mcgill.ca/brainweb
+- https://brainweb.bic.mni.mcgill.ca/brainweb/tissue_mr_parameters.txt
 
 # Keywords
 - `axis`: (`::String`, `="axial"`, opts=[`"axial"`, `"coronal"`, `"sagittal"`]) orientation of the phantom
@@ -266,8 +269,7 @@ function brain_phantom2D(; axis="axial", ss=4, us=1)
         (class .== 185) * 0 .+ #VESSELS
         (class .== 209) * 61 .+ #FAT2
         (class .== 232) * 58 .+ #DURA
-        (class .== 255) * 61 .+#MARROW
-        (class .== 255) * 70 #MARROW
+        (class .== 255) * 61 #MARROW
     T1 =
         (class .== 23) * 2569 .+ #CSF
         (class .== 46) * 833 .+ #GM
@@ -286,7 +288,7 @@ function brain_phantom2D(; axis="axial", ss=4, us=1)
         (class .== 70) * 0.77 .+ #WM
         (class .== 93) * 1 .+ #FAT1
         (class .== 116) * 1 .+ #MUSCLE
-        (class .== 139) * 0.7 .+ #SKIN/MUSCLE
+        (class .== 139) * 1 .+ #SKIN/MUSCLE
         (class .== 162) * 0 .+ #SKULL
         (class .== 185) * 0 .+ #VESSELS
         (class .== 209) * 0.77 .+ #FAT2
@@ -316,7 +318,7 @@ function brain_phantom2D(; axis="axial", ss=4, us=1)
 end
 
 """
-    obj = brain_phantom3D(; ss=4, us=1)
+    obj = brain_phantom3D(; ss=4, us=1, start_end=[160,200])
 
 Creates a three-dimentional brain Phantom struct.
 Default ss=4 sample spacing is 2 mm. Original file (ss=1) sample spacing is .5 mm.
@@ -326,7 +328,7 @@ Default ss=4 sample spacing is 2 mm. Original file (ss=1) sample spacing is .5 m
     digital brain phantom" NeuroImage, in review - 2006
 - B. Aubert-Broche, M. Griffin, G.B. Pike, A.C. Evans and D.L. Collins: "20 new digital
     brain phantoms for creation of validation image data bases" IEEE TMI, in review - 2006
-- https://brainweb.bic.mni.mcgill.ca/brainweb
+- https://brainweb.bic.mni.mcgill.ca/brainweb/tissue_mr_parameters.txt
 
 # Keywords
 - `ss`: (`::Integer or ::Vector{Integer}`, `=4`) subsampling parameter for all axes if scaler, per axis if 3 element vector [ssx, ssy, ssz]
@@ -398,8 +400,7 @@ function brain_phantom3D(; ss=4, us=1, start_end=[160, 200])
         (class .== 185) * 0 .+ #VESSELS
         (class .== 209) * 61 .+ #FAT2
         (class .== 232) * 58 .+ #DURA
-        (class .== 255) * 61 .+#MARROW
-        (class .== 255) * 70 #MARROW
+        (class .== 255) * 61 #MARROW
     T1 =
         (class .== 23) * 2569 .+ #CSF
         (class .== 46) * 833 .+ #GM
@@ -418,7 +419,7 @@ function brain_phantom3D(; ss=4, us=1, start_end=[160, 200])
         (class .== 70) * 0.77 .+ #WM
         (class .== 93) * 1 .+ #FAT1
         (class .== 116) * 1 .+ #MUSCLE
-        (class .== 139) * 0.7 .+ #SKIN/MUSCLE
+        (class .== 139) * 1 .+ #SKIN/MUSCLE
         (class .== 162) * 0 .+ #SKULL
         (class .== 185) * 0 .+ #VESSELS
         (class .== 209) * 0.77 .+ #FAT2
