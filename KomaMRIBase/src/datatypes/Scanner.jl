@@ -28,19 +28,38 @@ julia> sys = Scanner()
 julia> sys.B0
 ```
 """
-@with_kw mutable struct Scanner
-    #Main
-    B0::Real=1.5
-    B1::Real=10e-6
-    Gmax::Real=60e-3
-    Smax::Real=500
-    #Sampling
-    ADC_Δt::Real=2e-6
-    seq_Δt::Real=1e-5
-    GR_Δt::Real=1e-5
-    RF_Δt::Real=1e-6
-    #Secondary
-    RF_ring_down_T::Real=20e-6
-    RF_dead_time_T::Real=100e-6
-    ADC_dead_time_T::Real=10e-6
+abstract type RFCoils end
+
+@with_kw struct HardwareLimits{T}
+    B0::T = 1.5
+    B1::T = 10e-6
+    Gmax::T = 60e-3
+    Smax::T = 500
+    ADC_Δt::T = 2e-6
+    seq_Δt::T = 1e-5
+    GR_Δt::T = 1e-5
+    RF_Δt::T = 1e-6
+    RF_ring_down_T::T = 20e-6
+    RF_dead_time_T::T = 100e-6
+    ADC_dead_time_T::T = 10e-6
+end
+
+struct Gradients{T}
+end
+
+struct UniformRFCoils{T} <: RFCoils
+end
+
+struct ArbitraryRFCoils{T} <: RFCoils
+    x::AbstractVector{T}
+    y::AbstractVector{T}
+    z::AbstractVector{T}
+    coil_sens::AbstractMatrix{Complex{T}}  # Each column: coil
+    B1::AbstractMatrix{Complex{T}}         # Each column: coil
+end
+
+struct Scanner
+    limits::HardwareLimits{T}
+    gradients::Gradients{T}
+    rf_coils::RFCoils{T}
 end
