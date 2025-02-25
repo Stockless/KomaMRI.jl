@@ -1,3 +1,38 @@
+# Hardware limits
+@with_kw struct HardwareLimits{T}
+    B0::T = 1.5
+    B1::T = 10e-6
+    Gmax::T = 60e-3
+    Smax::T = 500
+    ADC_Δt::T = 2e-6
+    seq_Δt::T = 1e-5
+    GR_Δt::T = 1e-5
+    RF_Δt::T = 1e-6
+    RF_ring_down_T::T = 20e-6
+    RF_dead_time_T::T = 100e-6
+    ADC_dead_time_T::T = 10e-6
+end
+
+# Gradients
+abstract type Gradients{T} end
+
+struct LinearXYZGradients{T} <: Gradients{T}
+end
+
+# RF coils
+abstract type RFCoils{T} end
+
+struct UniformRFCoils{T} <: RFCoils{T}
+end
+
+struct ArbitraryRFCoils{T} <: RFCoils{T}
+    x::AbstractVector{T}
+    y::AbstractVector{T}
+    z::AbstractVector{T}
+    coil_sens::AbstractMatrix{Complex{T}}  # Each column: coil
+    B1::AbstractMatrix{Complex{T}}         # Each column: coil
+end
+
 """
     sys = Scanner(B0, B1, Gmax, Smax, ADC_Δt, seq_Δt, GR_Δt, RF_Δt,
         RF_ring_down_T, RF_dead_time_T, ADC_dead_time_T)
@@ -28,38 +63,8 @@ julia> sys = Scanner()
 julia> sys.B0
 ```
 """
-abstract type RFCoils end
-
-@with_kw struct HardwareLimits{T}
-    B0::T = 1.5
-    B1::T = 10e-6
-    Gmax::T = 60e-3
-    Smax::T = 500
-    ADC_Δt::T = 2e-6
-    seq_Δt::T = 1e-5
-    GR_Δt::T = 1e-5
-    RF_Δt::T = 1e-6
-    RF_ring_down_T::T = 20e-6
-    RF_dead_time_T::T = 100e-6
-    ADC_dead_time_T::T = 10e-6
-end
-
-struct Gradients{T}
-end
-
-struct UniformRFCoils{T} <: RFCoils
-end
-
-struct ArbitraryRFCoils{T} <: RFCoils
-    x::AbstractVector{T}
-    y::AbstractVector{T}
-    z::AbstractVector{T}
-    coil_sens::AbstractMatrix{Complex{T}}  # Each column: coil
-    B1::AbstractMatrix{Complex{T}}         # Each column: coil
-end
-
-struct Scanner
-    limits::HardwareLimits{T}
-    gradients::Gradients{T}
-    rf_coils::RFCoils{T}
+@with_kw struct Scanner{T}
+    limits::HardwareLimits{T} = HardwareLimits{T}()
+    gradients::Gradients{T} = LinearXYZGradients{T}()
+    rf_coils::RFCoils{T} = UniformRFCoils{T}()
 end
