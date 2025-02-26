@@ -1,7 +1,7 @@
 # # Experimental: Simulating with realistic coils
 
 using KomaMRI, MAT, MRIReco, MRIReco.RegularizedLeastSquares, Interpolations # hide
-sys = Scanner() # hide
+sys = Scanner{Float64}() # hide
 obj = brain_phantom2D()
 coil_sens1 = exp.(-π * (((obj.x) .+ 0.1) .^ 2 / 0.01) .+ ((obj.y) .^ 2 / 0.01))
 coil_sens2 = exp.(-π * (((obj.x) .- 0.1) .^ 2 / 0.01) .+ ((obj.y) .^ 2 / 0.01))

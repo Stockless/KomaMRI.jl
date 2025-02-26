@@ -449,7 +449,7 @@ function simulate_slice_profile(
     seq::Sequence; z=range(-2.e-2, 2.e-2, 200), sim_params=Dict{String,Any}("Δt_rf" => 1e-6)
 )
     sim_params["return_type"] = "state"
-    sys = Scanner()
+    sys = Scanner{Float64}()
     obj = Phantom{Float64}(; x=zeros(size(z)), z=Array(z))
     mag = simulate(obj, seq, sys; sim_params)
     return mag

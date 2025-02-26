@@ -2,7 +2,7 @@
 
 using KomaMRI # hide
 using PlotlyJS # hide
-sys = Scanner() # hide
+sys = Scanner{Float64}() # hide
 
 # It can also be interesting to see the effect of the patient's motion during an MRI scan.
 # For this, Koma provides the ability to add `motion` to the phantom.

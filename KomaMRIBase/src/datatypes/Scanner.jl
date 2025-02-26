@@ -1,5 +1,5 @@
 # Hardware limits
-@with_kw mutable struct HardwareLimits{T<:Float64}
+@with_kw mutable struct HardwareLimits{T}
     B0::T = 1.5
     B1::T = 10e-6
     Gmax::T = 60e-3
@@ -12,8 +12,6 @@
     RF_dead_time_T::T = 100e-6
     ADC_dead_time_T::T = 10e-6
 end
-
-HardwareLimits() = HardwareLimits{Float64}()
 
 # Gradients
 abstract type Gradients{T} end
@@ -60,10 +58,8 @@ julia> sys = Scanner()
 julia> sys.B0
 ```
 """
-@with_kw struct Scanner{T<:Float64}
+@with_kw struct Scanner{T}
     limits::HardwareLimits{T} = HardwareLimits{T}()
     gradients::Gradients{T} = LinearXYZGradients{T}()
     rf_coils::RFCoils{T} = UniformRFCoils{T}()
 end
-
-Scanner() = Scanner{Float64}()  # Default constructor for Float64

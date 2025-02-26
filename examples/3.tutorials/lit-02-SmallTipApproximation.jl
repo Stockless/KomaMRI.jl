@@ -3,7 +3,7 @@
 # > Based on the results in page 41 of the book "Handbook of MRI Pulse Sequences" by Bernstein et al.
 
 using KomaMRI # hide
-sys = Scanner() # hide
+sys = Scanner{Float64}() # hide
 sys.limits.Smax = 50 # hide
 
 # In this example, we will showcase a common approximation in MRI, the small tip angle approximation.
