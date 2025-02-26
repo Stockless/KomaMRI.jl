@@ -1,5 +1,5 @@
 # Hardware limits
-@with_kw struct HardwareLimits{T}
+Base.@kwdef struct HardwareLimits{T}
     B0::T = 1.5
     B1::T = 10e-6
     Gmax::T = 60e-3
@@ -13,26 +13,23 @@
     ADC_dead_time_T::T = 10e-6
 end
 
+HardwareLimits() = HardwareLimits{Float64}()
+
 # Gradients
 abstract type Gradients{T} end
-
-struct LinearXYZGradients{T} <: Gradients{T}
-end
+struct LinearXYZGradients{T} <: Gradients{T} end
 
 # RF coils
 abstract type RFCoils{T} end
-
-struct UniformRFCoils{T} <: RFCoils{T}
-end
+struct UniformRFCoils{T} <: RFCoils{T} end
 
 struct ArbitraryRFCoils{T} <: RFCoils{T}
     x::AbstractVector{T}
     y::AbstractVector{T}
     z::AbstractVector{T}
-    coil_sens::AbstractMatrix{Complex{T}}  # Each column: coil
-    B1::AbstractMatrix{Complex{T}}         # Each column: coil
+    coil_sens::AbstractMatrix{Complex{T}}
+    B1::AbstractMatrix{Complex{T}}
 end
-
 """
     sys = Scanner(B0, B1, Gmax, Smax, ADC_Δt, seq_Δt, GR_Δt, RF_Δt,
         RF_ring_down_T, RF_dead_time_T, ADC_dead_time_T)
@@ -63,8 +60,10 @@ julia> sys = Scanner()
 julia> sys.B0
 ```
 """
-@with_kw struct Scanner{T}
+Base.@kwdef struct Scanner{T}
     limits::HardwareLimits{T} = HardwareLimits{T}()
     gradients::Gradients{T} = LinearXYZGradients{T}()
     rf_coils::RFCoils{T} = UniformRFCoils{T}()
 end
+
+Scanner() = Scanner{Float64}()  # Default constructor for Float64
