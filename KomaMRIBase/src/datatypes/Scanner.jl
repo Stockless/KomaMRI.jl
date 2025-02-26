@@ -1,5 +1,5 @@
 # Hardware limits
-Base.@kwdef struct HardwareLimits{T}
+@with_kw struct HardwareLimits{T<:Float64}
     B0::T = 1.5
     B1::T = 10e-6
     Gmax::T = 60e-3
@@ -60,7 +60,7 @@ julia> sys = Scanner()
 julia> sys.B0
 ```
 """
-Base.@kwdef struct Scanner{T}
+@with_kw struct Scanner{T<:Float64}
     limits::HardwareLimits{T} = HardwareLimits{T}()
     gradients::Gradients{T} = LinearXYZGradients{T}()
     rf_coils::RFCoils{T} = UniformRFCoils{T}()
