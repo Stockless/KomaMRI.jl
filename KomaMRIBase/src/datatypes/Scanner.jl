@@ -1,5 +1,5 @@
 # Hardware limits
-@with_kw struct HardwareLimits{T<:Float64}
+@with_kw mutable struct HardwareLimits{T<:Float64}
     B0::T = 1.5
     B1::T = 10e-6
     Gmax::T = 60e-3
