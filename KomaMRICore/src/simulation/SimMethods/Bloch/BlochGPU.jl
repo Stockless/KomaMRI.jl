@@ -123,6 +123,7 @@ function apply_precession!(ϕ::AbstractArray{T}, Δϕ::AbstractArray{T}) where {
 end
 
 function run_spin_precession!(
+    sys::Scanner{T},
     p::Phantom{T},
     seq::DiscreteSequence{T},
     sig::AbstractArray{Complex{T}},

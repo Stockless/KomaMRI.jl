@@ -78,6 +78,7 @@ separating the spins of the phantom `obj` in `Nthreads`.
 """
 function run_spin_precession_parallel!(
     obj::Phantom{T},
+    sys::Scanner{T},
     seq::DiscreteSequence{T},
     sig::AbstractArray{Complex{T}},
     Xt::SpinStateRepresentation{T},
@@ -91,7 +92,7 @@ function run_spin_precession_parallel!(
 
     ThreadsX.foreach(enumerate(parts)) do (i, p)
         run_spin_precession!(
-            @view(obj[p]), seq, @view(sig[dims..., i]), @view(Xt[p]), sim_method, backend, @view(prealloc[p])
+            sys, @view(obj[p]), seq, @view(sig[dims..., i]), @view(Xt[p]), sim_method, backend, @view(prealloc[p])
         )
     end
 
@@ -165,6 +166,7 @@ take advantage of CPU parallel processing.
 - `M0`: (`::Vector{Mag}`) final state of the Mag vector
 """
 function run_sim_time_iter!(
+    sys::Scanner,
     obj::Phantom,
     seq::DiscreteSequence,
     sig::AbstractArray{Complex{T}},
@@ -199,7 +201,7 @@ function run_sim_time_iter!(
             rfs += 1
         else
             run_spin_precession_parallel!(
-                obj, seq_block, @view(sig[acq_samples, dims...]), Xt, sim_method, backend, prealloc_block(prealloc_result, block); Nthreads
+                obj, sys, seq_block, @view(sig[acq_samples, dims...]), Xt, sim_method, backend, prealloc_block(prealloc_result, block); Nthreads
             )
         end
         samples += Nadc
@@ -387,6 +389,7 @@ function simulate(
         seqd.t
     ) adc_points = Ndims[1]
     @time timed_tuple = @timed run_sim_time_iter!(
+        sys,
         obj,
         seqd,
         sig,

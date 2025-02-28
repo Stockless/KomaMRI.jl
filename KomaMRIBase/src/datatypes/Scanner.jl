@@ -22,11 +22,11 @@ abstract type RFCoils{T} end
 struct UniformRFCoils{T} <: RFCoils{T} end
 
 struct ArbitraryRFCoils{T} <: RFCoils{T}
-    x::AbstractVector{T}
-    y::AbstractVector{T}
-    z::AbstractVector{T}
-    coil_sens::AbstractMatrix{Complex{T}}
-    B1::AbstractMatrix{Complex{T}}
+    x::AbstractVector{T} 
+    y::AbstractVector{T} 
+    z::AbstractVector{T} 
+    coil_sens::AbstractMatrix{Complex{T}}  
+    B1::AbstractMatrix{Complex{T}} 
 end
 """
     sys = Scanner(B0, B1, Gmax, Smax, ADC_Δt, seq_Δt, GR_Δt, RF_Δt,

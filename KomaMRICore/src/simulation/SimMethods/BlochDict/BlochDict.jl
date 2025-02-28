@@ -30,6 +30,7 @@ precession.
 - `M0`: (`::Vector{Mag}`) final state of the Mag vector
 """
 function run_spin_precession!(
+    sys::Scanner{T},
     p::Phantom{T},
     seq::DiscreteSequence{T},
     sig::AbstractArray{Complex{T}},

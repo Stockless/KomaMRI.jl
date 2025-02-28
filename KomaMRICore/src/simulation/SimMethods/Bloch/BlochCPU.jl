@@ -46,6 +46,7 @@ NSpins x seq.t. The Bz_old, Bz_new, ϕ, and Mxy arrays are pre-allocated in run_
 that they can be re-used from block to block.
 """
 function run_spin_precession!(
+    sys::Scanner{T},
     p::Phantom{T},
     seq::DiscreteSequence{T},
     sig::AbstractArray{Complex{T}},

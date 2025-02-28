@@ -1,7 +1,7 @@
 # # Experimental: Simulating with realistic coils
 
 using KomaMRI, MAT, MRIReco, MRIReco.RegularizedLeastSquares, Interpolations # hide
-sys = Scanner{Float64}() # hide
+sys = Scanner{Float32}() # hide
 obj = brain_phantom2D()
 coil_sens1 = exp.(-π * (((obj.x) .+ 0.1) .^ 2 / 0.01) .+ ((obj.y) .^ 2 / 0.01))
 coil_sens2 = exp.(-π * (((obj.x) .- 0.1) .^ 2 / 0.01) .+ ((obj.y) .^ 2 / 0.01))
@@ -9,6 +9,7 @@ coil_sens3 = exp.(-π * ((obj.x) .^ 2 / 0.01) .+ (((obj.y) .+ 0.1) .^ 2 / 0.01))
 coil_sens4 = exp.(-π * ((obj.x) .^ 2 / 0.01) .+ (((obj.y) .- 0.1) .^ 2 / 0.01))
 coil_sens = hcat(coil_sens1, coil_sens2, coil_sens3, coil_sens4)
 obj.coil_sens = coil_sens
+sys.rf_coils.coil_sens = coil_sens
 seq_file = joinpath(
     dirname(pathof(KomaMRI)),
     "../examples/5.koma_paper/comparison_accuracy/sequences/EPI/epi_100x100_TE100_FOV230.seq",
