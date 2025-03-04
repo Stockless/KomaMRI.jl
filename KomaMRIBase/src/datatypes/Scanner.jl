@@ -28,6 +28,9 @@ struct ArbitraryRFCoils{T} <: RFCoils{T}
     coil_sens::AbstractMatrix{Complex{T}}  
     B1::AbstractMatrix{Complex{T}} 
 end
+
+export ArbitraryCoils
+
 """
     sys = Scanner(B0, B1, Gmax, Smax, ADC_Δt, seq_Δt, GR_Δt, RF_Δt,
         RF_ring_down_T, RF_dead_time_T, ADC_dead_time_T)
@@ -62,4 +65,10 @@ julia> sys.B0
     limits::HardwareLimits{T} = HardwareLimits{T}()
     gradients::Gradients{T} = LinearXYZGradients{T}()
     rf_coils::RFCoils{T} = UniformRFCoils{T}()
+end
+
+function ArbitraryCoils(x::AbstractVector{T}, y::AbstractVector{T}, z::AbstractVector{T},
+    coil_sens::AbstractMatrix{Complex{T}}, B1::AbstractMatrix{Complex{T}}) where T
+    rf_coils = ArbitraryRFCoils{T}(x, y, z, coil_sens, B1)
+    return Scanner{T}(rf_coils=rf_coils)
 end
