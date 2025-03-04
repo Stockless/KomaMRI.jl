@@ -1,5 +1,5 @@
 # Define observables exported observables
-sys_ui = Observable{Scanner}(Scanner{Float64}())
+sys_ui = Observable{Scanner}(Scanner())
 seq_ui = Observable{Sequence}(Sequence())
 obj_ui = Observable{Phantom{Float64}}(Phantom{Float64}(x=[0.0]))
 raw_ui = Observable{RawAcquisitionData}(setup_raw())

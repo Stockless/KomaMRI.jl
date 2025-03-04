@@ -1,7 +1,7 @@
 # # Chemical Shift in an EPI sequence
 
 using KomaMRI # hide
-sys = Scanner{Float64}() # hide
+sys = Scanner() # hide
 
 # For a more realistic example, we will use a brain phantom.
 

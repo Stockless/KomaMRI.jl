@@ -67,7 +67,7 @@ p1 = plot_phantom_map(obj, :T1; time_samples=Nt÷4, height=450)
 # Δ parameter. In this tutorial square-shaped gradients will be used.
 #
 # First, we generate the RF pulses:
-sys   = Scanner{Float64}()
+sys   = Scanner()
 durRF = 1e-3 
 B1    = (π / 2) / (2π * γ * durRF)
 rf90  = PulseDesigner.RF_hard(B1, durRF, sys)

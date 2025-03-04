@@ -3,7 +3,7 @@
 # First of all, let's use the KomaMRI package and define the default scanner.
 
 using KomaMRI
-sys = Scanner{Float64}() # default hardware definition
+sys = Scanner() # default hardware definition
 
 # The free induction decay is the simplest observable NMR signal.
 # This signal is the one that follows a single tipping RF pulse.

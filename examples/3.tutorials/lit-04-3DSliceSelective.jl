@@ -1,7 +1,7 @@
 # # Slice-Selective Acquisition of 3D Phantom
 
 using KomaMRI # hide
-sys = Scanner{Float64}() # hide
+sys = Scanner() # hide
 
 # While in the previous examples we simulated using hard RF pulses,
 # in this demonstration we will illustrate the principles of slice selection.
