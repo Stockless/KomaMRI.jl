@@ -92,7 +92,7 @@ function run_spin_precession_parallel!(
 
     ThreadsX.foreach(enumerate(parts)) do (i, p)
         run_spin_precession!(
-            @view(obj[p]), seq, sys, @view(sig[dims..., i]), @view(Xt[p]), sim_method, backend, @view(prealloc[p])
+            @view(obj[p]), seq, @view(sys[p]), @view(sig[dims..., i]), @view(Xt[p]), sim_method, backend, @view(prealloc[p])
         )
     end
 

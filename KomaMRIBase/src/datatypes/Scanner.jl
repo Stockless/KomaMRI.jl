@@ -26,7 +26,11 @@ struct ArbitraryRFCoils{T} <: RFCoils{T}
     y::AbstractVector{T} 
     z::AbstractVector{T} 
     coil_sens::AbstractMatrix{Complex{T}}  
-    B1::AbstractMatrix{Complex{T}} 
+    B1⁺::AbstractMatrix{Complex{T}} 
+end
+
+struct RFCoilsSensDefinedAtPhantomPositions{T} <: RFCoils{T}
+    coil_sens::AbstractMatrix{Complex{T}}
 end
 
 export ArbitraryRFCoils
@@ -65,4 +69,12 @@ julia> sys.B0
     limits::HardwareLimits{T} = HardwareLimits{Float64}()
     gradients::Gradients{T} = LinearXYZGradients{Float64}()
     rf_coils::RFCoils{T} = UniformRFCoils{Float64}()
+end
+
+function Base.view(sys::Scanner, p)
+    return sys.rf_coils !== nothing ? Scanner(limits=sys.limits, gradients=sys.gradients, rf_coils=view(sys.rf_coils, p)) : sys
+end
+
+function Base.view(rf_coils::ArbitraryRFCoils, p)
+    return rf_coils.coil_sens !== nothing ? RFCoilsSensDefinedAtPhantomPositions(rf_coils.coil_sens[p, :]) : rf_coils
 end
