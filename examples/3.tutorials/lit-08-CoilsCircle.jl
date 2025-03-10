@@ -1,7 +1,7 @@
 using KomaMRI, MAT, MRIReco, MRIReco.RegularizedLeastSquares, Interpolations
 
 # Scanner and object
-sys = Scanner{Float64}()
+sys = Scanner()
 obj = brain_phantom2D()
 
 # Circle parameters

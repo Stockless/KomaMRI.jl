@@ -33,8 +33,6 @@ struct RFCoilsSensDefinedAtPhantomPositions{T} <: RFCoils{T}
     coil_sens::AbstractMatrix{Complex{T}}
 end
 
-export ArbitraryRFCoils
-
 """
     sys = Scanner(B0, B1, Gmax, Smax, ADC_Δt, seq_Δt, GR_Δt, RF_Δt,
         RF_ring_down_T, RF_dead_time_T, ADC_dead_time_T)
@@ -72,9 +70,30 @@ julia> sys.B0
 end
 
 function Base.view(sys::Scanner, p)
-    return sys.rf_coils !== nothing ? Scanner(limits=sys.limits, gradients=sys.gradients, rf_coils=view(sys.rf_coils, p)) : sys
+    return Scanner(limits=sys.limits, gradients=sys.gradients, rf_coils=@view(sys.rf_coils[p]))
 end
 
-function Base.view(rf_coils::ArbitraryRFCoils, p)
-    return rf_coils.coil_sens !== nothing ? RFCoilsSensDefinedAtPhantomPositions(rf_coils.coil_sens[p, :]) : rf_coils
+function Base.view(rf_coils::RFCoilsSensDefinedAtPhantomPositions, p)
+    return RFCoilsSensDefinedAtPhantomPositions(@view(rf_coils.coil_sens[p,:]))
 end
+
+function Base.view(rf_coils::UniformRFCoils, p)
+    return rf_coils
+end
+
+function acquire_signal!(sig, rf_coils::UniformRFCoils, Mxy)
+    sig .= transpose(sum(Mxy; dims=1))
+    return nothing
+end
+
+function acquire_signal!(sig, rf_coils::RFCoilsSensDefinedAtPhantomPositions, Mxy)
+    if size(Mxy, 2) == 0
+        error("Mxy has zero columns, make sure it is properly initialized before calling this function.")
+    end
+    for i in 1:size(rf_coils.coil_sens, 2)
+        sig[:, i] .= transpose(sum(rf_coils.coil_sens[:, i] .* Mxy; dims=1))
+    end
+    return nothing
+end
+
+export ArbitraryRFCoils, RFCoilsSensDefinedAtPhantomPositions, UniformRFCoils, acquire_signal!
