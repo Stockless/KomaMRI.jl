@@ -81,17 +81,15 @@ function Base.view(rf_coils::UniformRFCoils, p)
     return rf_coils
 end
 
-function acquire_signal!(sig, rf_coils::UniformRFCoils, Mxy, adc)
-    sig .= transpose(sum(Mxy[:,adc]; dims=1))
+function acquire_signal!(sig, rf_coils::UniformRFCoils, Mxy)
+    sig .= transpose(sum(Mxy; dims=1))
     return nothing
 end
 
-function acquire_signal!(sig, rf_coils::RFCoilsSensDefinedAtPhantomPositions, Mxy, adc)
-    if size(Mxy, 2) == 0
-        error("Mxy has zero columns, make sure it is properly initialized before calling this function.")
-    end
+
+function acquire_signal!(sig, rf_coils::RFCoilsSensDefinedAtPhantomPositions, Mxy)
     for i in 1:size(rf_coils.coil_sens, 2)
-        sig[:, i] .= transpose(sum(rf_coils.coil_sens[:, i] .* Mxy[:,adc]; dims=1))
+        sig[:, i] .= transpose(sum(rf_coils.coil_sens[:, i] .* Mxy; dims=1))
     end
     return nothing
 end

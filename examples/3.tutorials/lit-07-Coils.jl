@@ -18,7 +18,7 @@ seq = read_seq(seq_file)
 # And simulate:
 
 sim_params = KomaMRICore.default_sim_params()
-sim_params["sim_method"] = BlochSimple()
+sim_params["sim_method"] = Bloch()
 raw = simulate(obj, seq, sys; sim_params)
 #raw = simulate(obj, seq, sys) # hide
 ##

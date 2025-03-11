@@ -380,6 +380,7 @@ function simulate(
         seqd = seqd |> gpu #DiscreteSequence
         Xt = Xt |> gpu #SpinStateRepresentation
         sig = sig |> gpu #Signal
+        sys = sys |> gpu #Scanner
         precalc = precalc |> gpu #Info calculated prior to simulation
     end
 
