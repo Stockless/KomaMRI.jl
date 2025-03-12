@@ -15,11 +15,17 @@ end
 
 # Gradients
 abstract type Gradients{T} end
-struct LinearXYZGradients{T} <: Gradients{T} end
+@with_kw mutable struct LinearXYZGradients{T} <: Gradients{T} 
+    Gx::AbstractVector{T} = zeros(T, 1)
+    Gy::AbstractVector{T} = zeros(T, 1)
+    Gz::AbstractVector{T} = zeros(T, 1)
+end
 
 # RF coils
 abstract type RFCoils{T} end
-struct UniformRFCoils{T} <: RFCoils{T} end
+@with_kw mutable struct UniformRFCoils{T} <: RFCoils{T} 
+    coil_sens::AbstractMatrix{Complex{T}} = complex(ones(Complex{T}, 1, 1))
+end
 
 struct ArbitraryRFCoils{T} <: RFCoils{T}
     x::AbstractVector{T} 
@@ -94,4 +100,4 @@ function acquire_signal!(sig, rf_coils::RFCoilsSensDefinedAtPhantomPositions, Mx
     return nothing
 end
 
-export ArbitraryRFCoils, RFCoilsSensDefinedAtPhantomPositions, UniformRFCoils, acquire_signal!
+export ArbitraryRFCoils, RFCoilsSensDefinedAtPhantomPositions, UniformRFCoils, acquire_signal!, HardwareLimits, LinearXYZGradients
